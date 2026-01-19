@@ -1,0 +1,73 @@
+import pandas as pd
+
+import numpy as np
+
+import matplotlib.pyplot as plt
+
+import seaborn as sns
+
+import plotly.express as px
+
+from sklearn.model_selection import train_test_split
+
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+
+from sklearn.metrics import classification_report, confusion_matrix
+
+from xgboost import XGBClassifier
+
+from imblearn.over_sampling import SMOTE
+
+data = pd.read_csv("C:\\Users\\kamal\\Downloads\\US_Accidents_March23.csv\\US_Accidents_March23.csv")
+
+df = pd.DataFrame(data)
+
+print(df.head())
+
+print(df.isnull().sum())
+
+print(df.columns)
+
+columns_to_drop = ['End_Lat', 'End_Lng', 'Country', 'Airport_Code', 'Wind_Chill(F)']
+
+columns_to_drop = [col for col in columns_to_drop if col in df.columns]
+
+df = df.drop(columns_to_drop, axis=1)
+
+for col in df.columns:
+    if df[col].dtype == 'object':
+        df[col] = df[col].fillna(df[col].mode()[0])
+    else:
+        df[col] = df[col].fillna(df[col].median())
+
+df['Start_Time'] = pd.to_datetime(df['Start_Time'], errors='coerce')
+
+df['Hour'] = df['Start_Time'].dt.hour
+
+df['Day_of_Week'] = df['Start_Time'].dt.dayofweek
+
+df = df.drop(['Start_Time', 'End_Time'], axis=1)
+
+label_encoder = LabelEncoder()
+
+categorical_cols = df.select_dtypes(include=['object']).columns
+
+for col in categorical_cols:
+    df[col] = label_encoder.fit_transform(df[col])
+
+sns.countplot(x='Weather_Condition', data=df, order=df['Weather_Condition'].value_counts().index)
+plt.title('Accidents by Weather Conditions')
+plt.xticks(rotation=90)
+plt.show()
+
+sns.countplot(x='Severity', data=df)
+plt.title('Distribution of Accident Severity')
+plt.show()
+
+sns.histplot(df['Hour'], bins=24, kde=True)
+plt.title('Accidents by Time of Day')
+plt.xlabel('Hour')
+plt.ylabel('Number of Accidents')
+plt.show()
+   
+
